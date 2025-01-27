@@ -12,7 +12,7 @@ class ChessRequestHandler(SimpleHTTPRequestHandler):
         SimpleHTTPRequestHandler.end_headers(self)
 
     def do_OPTIONS(self):
-        print(f"get option req, path={self.path}")
+        print(f"===== get option req, path={self.path}")
         self.send_response(200, "ok")
         # self.send_header('Access-Control-Allow-Credentials', 'true')
         # self.send_header('Access-Control-Allow-Origin', '*')
@@ -21,7 +21,7 @@ class ChessRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        print(f"get post req, path={self.path}")
+        print(f"===== get post req, path={self.path}")
         if self.path == '/move':
             # 读取请求体
             content_length = int(self.headers['Content-Length'])
@@ -36,7 +36,7 @@ class ChessRequestHandler(SimpleHTTPRequestHandler):
 
             try:
                 # 这里调用象棋引擎的代码处理移动并获取 AI 的响应
-                print(f"key log: To Process move: {move}")
+                # print(f"key log: To Process move: {move}")
                 ai_move = process_move(move)  # 这个函数需要实现
                 # print(f"key log: AI move: {ai_move}")
 
@@ -64,7 +64,7 @@ def process_move(input_move):
     :return: 字符串，AI 的移动，格式如 "h7h6"
     """
 
-    elephantfish.print_pos(hist[-1])
+    # elephantfish.print_pos(hist[-1])
 
     if hist[-1].score <= -elephantfish.MATE_LOWER:
         return ("You lost")
@@ -77,7 +77,6 @@ def process_move(input_move):
     if move not in hist[-1].gen_moves():
         return "ErrInvalidMove"
 
-    print(f"key log: input move is valid")
     hist.append(hist[-1].move(move))
 
     # After our move we rotate the board and print it again.
@@ -89,8 +88,9 @@ def process_move(input_move):
 
     # Fire up the engine to look for a move.
     start = time.time()
-    for _depth, move, score in searcher.search(hist[-1], hist):
-        if time.time() - start > elephantfish.THINK_TIME:
+    for _depth, move, score in searcher.search(start, hist[-1], hist):
+        cost = time.time() - start
+        if cost > elephantfish.THINK_TIME:
             break
 
     if score == elephantfish.MATE_UPPER:
