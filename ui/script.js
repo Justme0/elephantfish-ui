@@ -107,6 +107,12 @@ function deselectPiece() {
 }
 
 async function makeMove(fromPos, toPos) {
+    // 移除之前的AI移动高亮效果
+    const previousHighlight = document.querySelector('.ai-moved');
+    if (previousHighlight) {
+        previousHighlight.classList.remove('ai-moved');
+    }
+
     console.log(`Moving piece from ${fromPos} to ${toPos}`);
     
     // 移动玩家的棋子
@@ -172,6 +178,9 @@ async function makeMove(fromPos, toPos) {
                     
                     aiPiece.style.left = `${aiCol * GRID_SIZE + BOARD_PADDING}px`;
                     aiPiece.style.top = `${aiRow * GRID_SIZE + BOARD_PADDING}px`;
+
+                    // 添加高亮效果
+                    aiPiece.classList.add('ai-moved');
                 }
             }, 500);  // 500ms 延迟
         }

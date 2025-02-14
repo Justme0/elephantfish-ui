@@ -382,7 +382,7 @@ class Searcher:
                     upper = score
             # We want to make sure the move to play hasn't been kicked out of the table,
             # So we make another call that must always fail high and thus produce a move.
-            print(f"{time.time()-start_time:.2f}s lower={lower}, depth={depth}")
+            print(f"{time.time()-start_time:.2f}s lower={lower}, upper={upper}, delta={upper-lower}<={EVAL_ROUGHNESS}, depth={depth}")
             self.bound(pos, lower, depth)
             # If the game hasn't finished we can retrieve our move from the
             # transposition table.
