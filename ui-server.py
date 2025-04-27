@@ -1,7 +1,10 @@
-import json, time, re
+import json, time, re, sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
 import elephantfish
+
+# 关闭缓冲
+sys.stdout = open(sys.stdout.fileno(), mode='w', buffering=1)
 
 class ChessRequestHandler(SimpleHTTPRequestHandler):
     def end_headers(self):

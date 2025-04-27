@@ -150,7 +150,7 @@ TABLE_SIZE = 1e7
 QS_LIMIT = 219
 EVAL_ROUGHNESS = 13
 DRAW_TEST = True
-THINK_TIME = 6
+THINK_TIME = 0.8
 
 ###############################################################################
 # Chess logic
@@ -375,14 +375,14 @@ class Searcher:
             while lower < upper - EVAL_ROUGHNESS:
                 gamma = (lower+upper+1)//2
                 score = self.bound(pos, gamma, depth)
-                print(f"{time.time()-start_time:.2f}s lower={lower}, upper={upper}, gamme={gamma}, depth={depth} => score={score}")
+                print(f"{time.time()-start_time:.2f}s lower={lower:5}, upper={upper:5}, gamma={gamma:5}, depth={depth} => score={score}")
                 if score >= gamma:
                     lower = score
                 if score < gamma:
                     upper = score
             # We want to make sure the move to play hasn't been kicked out of the table,
             # So we make another call that must always fail high and thus produce a move.
-            print(f"{time.time()-start_time:.2f}s lower={lower}, upper={upper}, delta={upper-lower}<={EVAL_ROUGHNESS}, depth={depth}")
+            print(f"{time.time()-start_time:.2f}s lower={lower:5}, upper={upper:5}, delta={upper-lower}<={EVAL_ROUGHNESS}, depth={depth}")
             self.bound(pos, lower, depth)
             # If the game hasn't finished we can retrieve our move from the
             # transposition table.
