@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket流式输出测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .settings-panel {
+            background-color: #f8f9fa;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .setting-item label {
+            font-weight: bold;
+            color: #8b4513;
+        }
+        .setting-item select {
+            padding: 8px 12px;
+            border: 2px solid #8b4513;
+            border-radius: 4px;
+            background-color: white;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .apply-settings-btn {
+            background: #8b4513;
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+        .log-panel {
+            width: 100%;
+            height: 400px;
+            background-color: white;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #f0c78a;
+            border-bottom: 1px solid #8b4513;
+            border-radius: 6px 6px 0 0;
+        }
+        .log-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            border-radius: 0 0 6px 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .log-content p {
+            margin: 4px 0;
+            padding: 6px 8px;
+            background-color: white;
+            border-left: 3px solid #8b4513;
+            border-radius: 4px;
+            word-wrap: break-word;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        .log-content p.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .ai-log {
+            border-left-color: #4CAF50 !important;
+            background-color: #f1f8e9 !important;
+        }
+        .system-log {
+            border-left-color: #2196F3 !important;
+            background-color: #e3f2fd !important;
+        }
+        .error-log {
+            border-left-color: #f44336 !important;
+            background-color: #ffebee !important;
+        }
+        .user-log {
+            border-left-color: #ff9800 !important;
+            background-color: #fff3e0 !important;
+        }
+        .searching-indicator {
+            color: #FF9800;
+            font-size: 14px;
+            animation: searching-blink 1.5s infinite;
+        }
+        @keyframes searching-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket流式输出测试</h1>
+    
+    <!-- 设置面板 -->
+    <div class="settings-panel">
+        <div class="setting-item">
+            <label for="thinkTime">AI思考时间 (秒):</label>
+            <select id="thinkTime" onchange="applySettings()">
+                <option value="0.5">0.5秒 (快速)</option>
+                <option value="1">1秒 (标准)</option>
+                <option value="2">2秒 (较慢)</option>
+                <option value="4" selected>4秒 (慢速)</option>
+                <option value="8">8秒 (很慢)</option>
+                <option value="15">15秒 (极慢)</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试移动</h2>
+        <p>点击下面的按钮测试不同的移动，观察流式输出效果：</p>
+        <button onclick="testMove('h2e2')">测试移动 h2e2</button>
+        <button onclick="testMove('h7h6')">测试移动 h7h6</button>
+        <button onclick="testMove('c3c4')">测试移动 c3c4</button>
+        <button onclick="clearLog()">清空日志</button>
+    </div>
+
+    <!-- 日志显示区域 -->
+    <div class="log-panel">
+        <div class="log-header">
+            <h3>AI思考日志 <span id="searchingIndicator" class="searching-indicator" style="display: none;">🔍 思考中...</span></h3>
+            <button onclick="clearLog()" style="background: #8b4513; padding: 5px 10px; font-size: 12px;">清空</button>
+        </div>
+        <div class="log-content" id="logContent">
+            <!-- 日志内容将在这里显示 -->
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let currentSettings = {
+            thinkTime: 4.0
+        };
+        
+        function applySettings() {
+            const thinkTimeSelect = document.getElementById('thinkTime');
+            currentSettings.thinkTime = parseFloat(thinkTimeSelect.value);
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'settings',
+                    thinkTime: currentSettings.thinkTime
+                }));
+            }
+            
+            addLogMessage('系统', `AI思考时间已设置为 ${currentSettings.thinkTime} 秒`);
+        }
+        
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8000');
+            
+            ws.onopen = function(event) {
+                console.log('WebSocket连接已建立');
+                addLogMessage('系统', 'WebSocket连接已建立');
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (error) {
+                    console.error('解析WebSocket消息失败:', error);
+                }
+            };
+            
+            ws.onclose = function(event) {
+                console.log('WebSocket连接已关闭');
+                addLogMessage('系统', 'WebSocket连接已关闭');
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+                addLogMessage('系统', 'WebSocket连接错误');
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'log':
+                    addLogMessage('AI', data.message);
+                    if (data.message === 'AI开始思考...') {
+                        showSearchingIndicator();
+                    }
+                    if (data.message.includes('AI最终移动:')) {
+                        hideSearchingIndicator();
+                    }
+                    break;
+                case 'move':
+                    console.log('AI移动:', data.move);
+                    addLogMessage('系统', `AI移动: ${data.move}`);
+                    break;
+                case 'error':
+                    addLogMessage('错误', data.message);
+                    break;
+                case 'settings':
+                    addLogMessage('系统', `服务器已确认设置: AI思考时间 ${data.thinkTime} 秒`);
+                    break;
+                default:
+                    console.log('未知消息类型:', data);
+            }
+        }
+
+        function addLogMessage(sender, message) {
+            const logContent = document.getElementById('logContent');
+            const logEntry = document.createElement('p');
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            
+            let className = '';
+            let prefix = '';
+            
+            switch(sender) {
+                case 'AI':
+                    className = 'ai-log';
+                    prefix = '🤖';
+                    break;
+                case '系统':
+                    className = 'system-log';
+                    prefix = '⚙️';
+                    break;
+                case '错误':
+                    className = 'error-log';
+                    prefix = '❌';
+                    break;
+                default:
+                    className = 'user-log';
+                    prefix = '👤';
+            }
+            
+            logEntry.className = className;
+            logEntry.innerHTML = `<span class="time">[${timeString}]</span> <span class="sender">${prefix} ${sender}:</span> ${message}`;
+            
+            logContent.appendChild(logEntry);
+            
+            // 添加动画效果
+            setTimeout(() => {
+                logEntry.classList.add('show');
+            }, 10);
+            
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function testMove(move) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'move',
+                    move: move
+                }));
+                addLogMessage('用户', `发送移动: ${move}`);
+            } else {
+                addLogMessage('错误', 'WebSocket未连接');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('logContent').innerHTML = '';
+            addLogMessage('系统', '日志已清空');
+        }
+
+        function showSearchingIndicator() {
+            document.getElementById('searchingIndicator').style.display = 'inline';
+        }
+
+        function hideSearchingIndicator() {
+            document.getElementById('searchingIndicator').style.display = 'none';
+        }
+
+        // 页面加载时连接WebSocket
+        window.addEventListener('load', connectWebSocket);
+    </script>
+</body>
+</html> 

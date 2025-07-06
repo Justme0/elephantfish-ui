@@ -150,7 +150,7 @@ TABLE_SIZE = 1e7
 QS_LIMIT = 219
 EVAL_ROUGHNESS = 13
 DRAW_TEST = True
-THINK_TIME = 0.8
+THINK_TIME = 4
 
 ###############################################################################
 # Chess logic

@@ -7,6 +7,7 @@
 </head>
 <body>
     <h1>中国象棋在线对战</h1>
+    
     <div class="game-container">
         <div class="chessboard">
             <!-- 红方棋子 -->
@@ -54,6 +55,35 @@
                 <span>河</span>
                 <span>汉</span>
                 <span>界</span>
+            </div>
+        </div>
+        
+        <!-- 右侧面板 -->
+        <div class="right-panel">
+            <!-- 设置区域 -->
+            <div class="settings-area">
+                <div class="setting-item">
+                    <label for="thinkTime">AI思考时间:</label>
+                    <select id="thinkTime" onchange="applySettings()">
+                        <option value="0.5">0.5秒 (快速)</option>
+                        <option value="1">1秒 (标准)</option>
+                        <option value="2">2秒 (较慢)</option>
+                        <option value="4" selected>4秒 (慢速)</option>
+                        <option value="8">8秒 (很慢)</option>
+                        <option value="15">15秒 (极慢)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 日志显示区域 -->
+            <div class="log-panel">
+                <div class="log-header">
+                    <h3>AI思考日志</h3>
+                    <button class="clear-btn" onclick="clearLog()">清空</button>
+                </div>
+                <div class="log-content" id="logContent">
+                    <!-- 日志内容将在这里显示 -->
+                </div>
             </div>
         </div>
     </div>

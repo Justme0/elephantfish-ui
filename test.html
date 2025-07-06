@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .log-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            max-height: 400px;
+            background-color: white;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: #f0c78a;
+            border-bottom: 1px solid #8b4513;
+            border-radius: 6px 6px 0 0;
+        }
+        .log-content {
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            border-radius: 0 0 6px 6px;
+        }
+        .log-content p {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background-color: white;
+            border-left: 3px solid #8b4513;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <h1>象棋引擎测试页面</h1>
+    
+    <div class="test-section">
+        <h2>测试移动</h2>
+        <p>点击下面的按钮测试不同的移动：</p>
+        <button onclick="testMove('h2e2')">测试移动 h2e2</button>
+        <button onclick="testMove('h7h6')">测试移动 h7h6</button>
+        <button onclick="testMove('c3c4')">测试移动 c3c4</button>
+    </div>
+
+    <!-- 日志对话框 -->
+    <div class="log-dialog" id="logDialog">
+        <div class="log-header">
+            <h3>AI思考日志</h3>
+            <button onclick="closeLogDialog()" style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+        </div>
+        <div class="log-content" id="logContent">
+            <!-- 日志内容将在这里显示 -->
+        </div>
+    </div>
+
+    <script>
+        function showLogDialog(logs) {
+            const logDialog = document.getElementById('logDialog');
+            const logContent = document.getElementById('logContent');
+            
+            // 清空之前的内容
+            logContent.innerHTML = '';
+            
+            // 添加日志内容
+            if (logs && logs.length > 0) {
+                logs.forEach(log => {
+                    const logEntry = document.createElement('p');
+                    logEntry.textContent = log;
+                    logContent.appendChild(logEntry);
+                });
+            } else {
+                const noLogs = document.createElement('p');
+                noLogs.textContent = '暂无日志信息';
+                logContent.appendChild(noLogs);
+            }
+            
+            // 显示对话框
+            logDialog.style.display = 'flex';
+        }
+
+        function closeLogDialog() {
+            const logDialog = document.getElementById('logDialog');
+            logDialog.style.display = 'none';
+        }
+
+        async function testMove(move) {
+            console.log(`测试移动: ${move}`);
+            
+            try {
+                const response = await fetch('http://localhost:8000/move', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ move: move })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const data = await response.json();
+                console.log('服务端响应:', data);
+                
+                // 显示日志对话框
+                if (data.logs && data.logs.length > 0) {
+                    showLogDialog(data.logs);
+                }
+                
+                alert(`AI移动: ${data.move}`);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('与象棋引擎通信时出错，请确保 elephantfish 服务正在运行');
+            }
+        }
+    </script>
+</body>
+</html> 
